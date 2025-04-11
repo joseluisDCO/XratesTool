@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>XRatesTool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap" rel="stylesheet"/>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            font-family: 'Poppins', sans-serif;
+            color: #1a1a1a;
+        }
+        header {
+            height: 20px;
+            padding: 10px 20px;
+            background-color: #f4f6f8;
+        }
+        .cabecera {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-left: 20px;
+        }
+        .cabecera h4 {
+            margin: 0;
+            color: #0a6ed1; /* Blue color for name */
+        }
+        .cabecera p {
+            margin-top: 5px;
+            color: #0a6ed1; /* Blue color for email */
+        }
+        .logo {
+            width: 300px;
+            height: auto;
+            display: block;
+        }
+        .paso1, .paso2, .paso3, .paso4 {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+        h2 {
+            font-size: 16px;
+            color: #0a6ed1;
+            margin-bottom: 15px;
+        }
+        .fecha-toggle {
+            display: flex;
+            gap: 10px;
+        }
+        .fecha-option {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #0a6ed1;
+            background: white;
+            color: #0a6ed1;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .fecha-option.active {
+            background-color: #0a6ed1;
+            color: #fff;
+        }
+        .intervalo-fields {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .manual-date-input {
+            padding: 10px;
+            font-size: 16px;
+            width: 160px;
+            border-radius: 8px;
+            border: 1px solid #0a6ed1;
+            background: #f9f9f9;
+            color: #0a6ed1;
+        }
+        .currency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .currency-btn {
+            padding: 10px;
+            border: 1px solid #0a6ed1;
+            border-radius: 6px;
+            background: white;
+            color: #0a6ed1;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .currency-btn.active {
+            background-color: #0a6ed1;
+            color: white;
+        }
+        .currency-toggle-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .button {
+            background-color: #0a6ed1;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .resumen-title {
+            font-size: 16px;
+            color: #0a6ed1;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="cabecera">
+            <h4>&#169; 2025 Jose Luis de Castro Olmedo</h4>
+            <p>jl.decastro@outlook.com</p>
+        </div>
+    </header>
+
+    <div class="paso1">
+        <h2>Paso 1. Indica la fecha para la que deseas el tipo de cambio:</h2>
+        <div class="fecha-toggle">
+            <button class="fecha-option active" id="select-ayer" type="button">Ayer</button>
+            <button class="fecha-option" id="select-intervalo" type="button">Intervalo</button>
+        </div>
+        <div class="intervalo-fields" id="intervaloFields" style="display: none; justify-content: center; gap: 15px; margin-top: 15px;">
+            <div style="display: flex; flex-direction: row; align-items: center; gap: 5px;">
+                <label for="fechaDesde" style="color: #0a6ed1; font-weight: bold;">Desde:</label>
+                <input class="manual-date-input" style="width: 130px;" id="fechaDesde" placeholder="DD/MM/AAAA" type="text"/>
+            </div>
+            <div style="display: flex; flex-direction: row; align-items: center; gap: 5px;">
+                <label for="fechaHasta" style="color: #0a6ed1; font-weight: bold;">Hasta:</label>
+                <input class="manual-date-input" style="width: 130px;" id="fechaHasta" placeholder="DD/MM/AAAA" type="text"/>
+            </div>
+        </div>
+    </div>
+
+    <div class="paso2">
+        <h2>Paso 2. Ajusta las monedas para las que quieres generar el fichero con el tipo de cambio a €. Por defecto estan todas seleccionadas.</h2>
+        <div class="currency-toggle-container">
+            <input type="radio" id="desmarcarTodas" name="currency-toggle"/>
+            <label for="desmarcarTodas" style="color: #0a6ed1; font-weight: bold;">Desmarcar todas</label>
+            <input type="radio" id="marcarTodas" name="currency-toggle"/>
+            <label for="marcarTodas" style="color: #0a6ed1; font-weight: bold;">Marcar todas</label>
+        </div>
+        <div class="currency-grid" id="currencyGrid"></div>
+    </div>
+
+    <div class="paso3">
+        <h2>Paso 3. Consultar BCE</h2>
+        <button class="button" onclick="fetchAndParseECB()">Consultar</button>
+    </div>
+
+    <div class="paso4" id="resultados">
+        <h2 class="resumen-title">Paso 4. Resumen de la consulta y generacion de fichero</h2>
+        <div id="bce-output"></div>
+    </div>
+
+    <script>
+        const divisas = ["AUD","BGN","BRL","CAD","CHF","CNY","CZK","DKK","GBP","HKD","HUF","ILS","INR","ISK","JPY","KRW","MXN","MYR","NOK","NZD","PHP","PLN","RON","SEK","SGD","THB","TRY","USD","ZAR"];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const grid = document.getElementById("currencyGrid");
+            divisas.forEach(div => {
+                const btn = document.createElement("button");
+                btn.textContent = div;
+                btn.classList.add("currency-btn", "active");
+                btn.onclick = () => btn.classList.toggle("active");
+                grid.appendChild(btn);
+            });
+
+            document.getElementById("desmarcarTodas").addEventListener("change", () => {
+                document.querySelectorAll(".currency-btn.active").forEach(btn => btn.classList.remove("active"));
+            });
+
+            document.getElementById("marcarTodas").addEventListener("change", () => {
+                document.querySelectorAll(".currency-btn").forEach(btn => btn.classList.add("active"));
+            });
+
+            document.getElementById("select-ayer").addEventListener("click", () => {
+                document.getElementById("select-ayer").classList.add("active");
+                document.getElementById("select-intervalo").classList.remove("active");
+                document.getElementById("intervaloFields").style.display = "none";
+            });
+
+            document.getElementById("select-intervalo").addEventListener("click", () => {
+                document.getElementById("select-intervalo").classList.add("active");
+                document.getElementById("select-ayer").classList.remove("active");
+                document.getElementById("intervaloFields").style.display = "flex";
+            });
+        });
+
+        async function fetchAndParseECB() {
+            try {
+                const res = await fetch("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml");
+                const xmlText = await res.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+                const cubeTime = xmlDoc.querySelector("Cube[time]");
+                const date = cubeTime?.getAttribute("time") || "-";
+
+                const rates = {};
+                cubeTime?.querySelectorAll("Cube[currency][rate]").forEach(cube => {
+                    rates[cube.getAttribute("currency")] = parseFloat(cube.getAttribute("rate"));
+                });
+
+                const selected = Array.from(document.querySelectorAll(".currency-btn.active"))
+                                      .map(btn => btn.textContent.trim());
+
+                const ayerActivo = document.getElementById('select-ayer').classList.contains('active');
+                let nDias = 1;
+                if (!ayerActivo) {
+                    const desde = document.getElementById('fechaDesde').value;
+                    const hasta = document.getElementById('fechaHasta').value;
+                    const parseDate = (str) => new Date(str.split('/').reverse().join('-'));
+                    if (desde && hasta) {
+                        const diff = parseDate(hasta) - parseDate(desde);
+                        nDias = Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1);
+                    }
+                }
+
+                let nResultados = selected.filter(curr => rates[curr]).length;
+                const selectedHTML = selected.map(curr => `<li><strong>${curr}</strong>: ${rates[curr]?.toFixed(4) || 'NO DISPONIBLE'}</li>`).join('');
+
+                document.getElementById("bce-output").innerHTML = `
+                    <ul>
+                        <li><strong>Nº de monedas solicitadas:</strong> ${selected.length}</li>
+                        <li><strong>Nº de días solicitados:</strong> ${nDias}</li>
+                        <li><strong>Nº de resultados del BCE:</strong> ${nResultados}</li>
+                    </ul>
+                    <p><strong>Tipos de cambio disponibles:</strong></p>
+                    <ul>${selectedHTML}</ul>
+                `;
+            } catch (err) {
+                console.error("Error al consultar BCE:", err);
+                document.getElementById("bce-output").innerHTML = `<p style="color:red">Error al consultar BCE. Intenta más tarde.</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
