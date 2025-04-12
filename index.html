@@ -206,57 +206,74 @@
                 document.getElementById("intervaloFields").style.display = "flex";
             });
         });
+async function fetchAndParseECB() {
+    const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+    const apiUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
 
-        async function fetchAndParseECB() {
-            const proxyUrl = "https://cors-anywhere.herokuapp.com/";
-            const apiUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
+    try {
+        // Fetching data using the proxy
+        const res = await fetch(proxyUrl + apiUrl);
+        const xmlText = await res.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
-            try {
-                const res = await fetch(proxyUrl + apiUrl);
-                const xmlText = await res.text();
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+        // Log the XML response to verify it's being fetched correctly
+        console.log(xmlDoc);
 
-                const cubeTime = xmlDoc.querySelector("Cube[time]");
-                const date = cubeTime?.getAttribute("time") || "-";
+        const cubeTime = xmlDoc.querySelector("Cube[time]");
+        const date = cubeTime?.getAttribute("time") || "-";
 
-                const rates = {};
-                cubeTime?.querySelectorAll("Cube[currency][rate]").forEach(cube => {
-                    rates[cube.getAttribute("currency")] = parseFloat(cube.getAttribute("rate"));
-                });
+        const rates = {};
+        // Parsing all currencies and their rates
+        cubeTime?.querySelectorAll("Cube[currency][rate]").forEach(cube => {
+            rates[cube.getAttribute("currency")] = parseFloat(cube.getAttribute("rate"));
+        });
 
-                const selected = Array.from(document.querySelectorAll(".currency-btn.active"))
-                                      .map(btn => btn.textContent.trim());
+        // Log the rates object to see the parsed currency data
+        console.log(rates);
 
-                const ayerActivo = document.getElementById('select-ayer').classList.contains('active');
-                let nDias = 1;
-                if (!ayerActivo) {
-                    const desde = document.getElementById('fechaDesde').value;
-                    const hasta = document.getElementById('fechaHasta').value;
-                    const parseDate = (str) => new Date(str.split('/').reverse().join('-'));
-                    if (desde && hasta) {
-                        const diff = parseDate(hasta) - parseDate(desde);
-                        nDias = Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1);
-                    }
-                }
+        const selected = Array.from(document.querySelectorAll(".currency-btn.active"))
+                              .map(btn => btn.textContent.trim());
 
-                let nResultados = selected.filter(curr => rates[curr]).length;
-                const selectedHTML = selected.map(curr => `<li><strong>${curr}</strong>: ${rates[curr]?.toFixed(4) || 'NO DISPONIBLE'}</li>`).join('');
+        // If no currency is selected, show an error message
+        if (selected.length === 0) {
+            document.getElementById('bce-output').innerHTML = `<p style="color:red">Por favor, seleccione al menos una moneda.</p>`;
+            return;
+        }
 
-                document.getElementById("bce-output").innerHTML = `
-                    <ul>
-                        <li><strong>Nº de monedas solicitadas:</strong> ${selected.length}</li>
-                        <li><strong>Nº de días solicitados:</strong> ${nDias}</li>
-                        <li><strong>Nº de resultados del BCE:</strong> ${nResultados}</li>
-                    </ul>
-                    <p><strong>Tipos de cambio disponibles:</strong></p>
-                    <ul>${selectedHTML}</ul>
-                `;
-            } catch (err) {
-                console.error("Error al consultar BCE:", err);
-                document.getElementById("bce-output").innerHTML = `<p style="color:red">Error al consultar BCE. Verifique la conexión o los datos ingresados. ${err.message}</p>`;
+        // Parsing the number of days selected
+        const ayerActivo = document.getElementById('select-ayer').classList.contains('active');
+        let nDias = 1;
+        if (!ayerActivo) {
+            const desde = document.getElementById('fechaDesde').value;
+            const hasta = document.getElementById('fechaHasta').value;
+            const parseDate = (str) => new Date(str.split('/').reverse().join('-'));
+            if (desde && hasta) {
+                const diff = parseDate(hasta) - parseDate(desde);
+                nDias = Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)) + 1, 1);
             }
         }
-    </script>
+
+        // Counting the number of results available for the selected currencies
+        let nResultados = selected.filter(curr => rates[curr]).length;
+
+        // Generate the list of selected currencies with their rates
+        const selectedHTML = selected.map(curr => `<li><strong>${curr}</strong>: ${rates[curr]?.toFixed(4) || 'NO DISPONIBLE'}</li>`).join('');
+
+        document.getElementById("bce-output").innerHTML = `
+            <ul>
+                <li><strong>Nº de monedas solicitadas:</strong> ${selected.length}</li>
+                <li><strong>Nº de días solicitados:</strong> ${nDias}</li>
+                <li><strong>Nº de resultados del BCE:</strong> ${nResultados}</li>
+            </ul>
+            <p><strong>Tipos de cambio disponibles:</strong></p>
+            <ul>${selectedHTML}</ul>
+        `;
+    } catch (err) {
+        console.error("Error al consultar BCE:", err);
+        document.getElementById("bce-output").innerHTML = `<p style="color:red">Error al consultar BCE. Verifique la conexión o los datos ingresados. ${err.message}</p>`;
+    }
+}
+</script>
 </body>
 </html>
