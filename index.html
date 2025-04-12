@@ -208,8 +208,11 @@
         });
 
         async function fetchAndParseECB() {
+            const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+            const apiUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
+
             try {
-                const res = await fetch("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml");
+                const res = await fetch(proxyUrl + apiUrl);
                 const xmlText = await res.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
